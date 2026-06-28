@@ -1,0 +1,31 @@
+---
+title: Stocksmith API
+description: REST API for materials, products, recipes, and manufactures.
+template: splash
+hero:
+  tagline: Read and write your inventory programmatically — materials, products, recipes, and manufactures.
+  actions:
+    - text: Get started
+      link: /getting-started/
+      icon: right-arrow
+    - text: API Reference
+      link: /reference/
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid stagger>
+  <Card title="Authentication">
+    Bearer-token auth with personal API keys. [Learn more](/authentication/)
+  </Card>
+  <Card title="Pagination">
+    Page-number pagination with a consistent `meta` envelope. [Learn more](/pagination/)
+  </Card>
+  <Card title="Built for automation">
+    LLM-friendly — an `llms.txt` is published for agents. [Learn more](/agents/)
+  </Card>
+  <Card title="API Reference">
+    Every endpoint, generated from the OpenAPI schema. [Browse the reference](/reference/)
+  </Card>
+</CardGrid>
