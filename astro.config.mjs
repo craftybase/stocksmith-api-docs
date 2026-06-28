@@ -11,10 +11,17 @@ export default defineConfig({
       title: 'Stocksmith API',
       description: 'REST API for materials, products, recipes, and manufactures.',
       favicon: '/favicon.svg',
+      // Logos are named by their own colour, so map by theme function:
+      // black wordmark on light backgrounds, white wordmark on dark backgrounds.
+      logo: {
+        light: './src/assets/logo-dark.svg',
+        dark: './src/assets/logo-light.svg',
+        replacesTitle: true,
+        alt: 'Stocksmith API',
+      },
       head: [
         { tag: 'meta', attrs: { property: 'og:image', content: 'https://api.stocksmith.dev/favicon.svg' } },
-        // TODO(branding): replace with the final Stocksmith brand colour.
-        { tag: 'meta', attrs: { name: 'theme-color', content: '#369AA8' } },
+        { tag: 'meta', attrs: { name: 'theme-color', content: '#EE8F38' } },
       ],
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/craftybase/stocksmith-api-docs' },
