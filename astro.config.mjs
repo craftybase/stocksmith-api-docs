@@ -19,6 +19,26 @@ export default defineConfig({
         replacesTitle: true,
         alt: 'Stocksmith API',
       },
+      // "Syntax"-inspired skin: self-hosted Inter (body) + Lexend (headings),
+      // slate palette + brand amber. See src/styles/syntax-theme.css.
+      customCss: [
+        '@fontsource/inter/400.css',
+        '@fontsource/inter/500.css',
+        '@fontsource/inter/600.css',
+        '@fontsource/lexend/500.css',
+        '@fontsource/lexend/600.css',
+        '@fontsource/lexend/700.css',
+        './src/styles/syntax-theme.css',
+      ],
+      // Always-dark code panels (slate-900) like Syntax, regardless of page theme.
+      expressiveCode: {
+        themes: ['one-dark-pro'],
+        styleOverrides: {
+          codeBackground: '#0f172a',
+          borderColor: '#1e293b',
+          borderRadius: '0.5rem',
+        },
+      },
       head: [
         { tag: 'meta', attrs: { property: 'og:image', content: 'https://api.stocksmith.dev/favicon.svg' } },
         { tag: 'meta', attrs: { name: 'theme-color', content: '#EE8F38' } },
