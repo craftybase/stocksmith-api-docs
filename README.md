@@ -11,10 +11,15 @@ Stocksmith CLI docs — rendering the API reference from an OpenAPI schema via
 ## Source of truth
 
 `openapi.json` is **generated** from the rswag request specs in `craftybase-app`
-(`docs/api/openapi.json`) and mirrored into this repo by CI on merge to `develop`.
+(`docs/api/openapi.json`, via `RAILS_ENV=test bundle exec rake rswag:specs:swaggerize`).
+It is the contract this site renders.
 
-> The `openapi.json` currently committed here is a **placeholder** so the site builds.
-> It will be replaced once the rswag pipeline (Workstream A) is wired up.
+Syncing is **manual for now** (no CI mirror yet). After the schema changes have merged in
+craftybase-app, publish them here with:
+
+```bash
+bin/sync-schema.sh   # copies ../craftybase-app/docs/api/openapi.json, builds, commits, pushes
+```
 
 Narrative guides live in `src/content/docs/`.
 
