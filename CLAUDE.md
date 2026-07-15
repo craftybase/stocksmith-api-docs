@@ -27,5 +27,9 @@ re-sync.
   `config/initializers/rack_attack.rb` (120/min per key, 20/min per IP), pagination and
   errors in `app/controllers/api/v1/base_controller.rb`, key format in
   `app/models/api_key.rb` (`live_` prefix), MCP server in
-  `app/controllers/api/mcp/server_controller.rb` (mcp.craftybase.com).
+  `app/controllers/api/mcp/server_controller.rb` (served at api.stocksmith.io/mcp).
+- Hosts: the API is served at **api.stocksmith.io** (path `/api/v1`); old
+  app.craftybase.com URLs 302-redirect (post-rebrand). The schema's `servers` entry comes
+  from `spec/swagger_helper.rb` upstream — the LB/DNS decides the real host, so verify
+  with `curl` when in doubt.
 - Customer-facing vocabulary only: materials/products (not the internal items/projects).

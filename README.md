@@ -47,6 +47,7 @@ bin/check-drift.sh && npm run build
 - `openapi.json` matches the app's committed schema,
 - every endpoint mentioned in the prose exists in the schema **and vice versa** — a
   newly shipped endpoint fails the check until a guide mentions it,
+- the base URL and MCP URL in the prose sit on the schema's `servers` host,
 - facts quoted in the prose match the code: rate limits and the API key prefix,
   including the schema's own `bearer_auth` description.
 
@@ -60,6 +61,7 @@ edit — this map is how the docs were written and audited:
 
 | Guide page | Source of truth in craftybase-app |
 |---|---|
+| Getting Started (base URL) | `spec/swagger_helper.rb` (`servers`) — but the LB/DNS decides the real host; verify with `curl` |
 | Getting Started (endpoints, filters) | `config/routes.rb` (`namespace :api`), `app/lib/api/v1/catalog_query.rb` |
 | Authentication (key format, 401/403, beta gating) | `app/models/api_key.rb` (`KEY_PREFIX`), `app/controllers/concerns/api/api_key_authentication.rb`, `Account#public_api_enabled?` |
 | Permissions (financial field omission) | `app/lib/api/v1/base_serializer.rb` (`can_view_financials?`) |

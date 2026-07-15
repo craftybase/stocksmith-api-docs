@@ -20,7 +20,7 @@ from an account without access return `403` with
 Pass the key in the `Authorization` header:
 
 ```bash
-curl https://app.craftybase.com/api/v1/materials \
+curl https://api.stocksmith.io/api/v1/materials \
   -H "Authorization: Bearer live_your_key_here"
 ```
 

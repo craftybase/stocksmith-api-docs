@@ -6,7 +6,8 @@
 #   1. openapi.json here matches the committed schema in craftybase-app
 #   2. every API path mentioned in the prose exists in openapi.json
 #   3. every path in openapi.json is mentioned somewhere in the prose
-#   4. facts quoted in the prose match the app code:
+#   4. the base URL and MCP URL in the prose sit on the schema's servers host
+#   5. facts quoted in the prose match the app code:
 #      - rate limits (config/initializers/rack_attack.rb)
 #      - the API key prefix (app/models/api_key.rb), in prose and in the
 #        schema's own bearer_auth description
@@ -67,7 +68,39 @@ sys.exit(1 if failures else 0)
 PY
 [ $? -ne 0 ] && FAILURES=$((FAILURES + 1))
 
-# -- 4a. rate limits quoted in prose match rack_attack.rb ----------------------
+# -- 4. base URL / MCP URL match the schema servers entry ----------------------
+python3 - "$DOCS" <<'PY'
+import json, pathlib, re, sys
+
+docs = pathlib.Path(sys.argv[1])
+server = json.load(open("openapi.json"))["servers"][0]["url"].rstrip("/")
+failures = 0
+
+def block_after(heading, text):
+    m = re.search(re.escape(heading) + r".*?```\s*\n(\S+)\s*\n```", text, re.S)
+    return m.group(1) if m else None
+
+base = block_after("## Base URL", (docs / "getting-started.md").read_text())
+if base != f"{server}/api/v1":
+    print(f"FAIL: getting-started base URL is {base}, but schema servers[0] implies "
+          f"{server}/api/v1 — if the prose is right, fix servers in spec/swagger_helper.rb "
+          f"(craftybase-app), regenerate, and sync")
+    failures += 1
+else:
+    print(f"  ok: base URL matches schema servers entry ({base})")
+
+mcp = block_after("## MCP server", (docs / "agents.md").read_text())
+if mcp and not mcp.startswith(server + "/"):
+    print(f"FAIL: agents.md MCP URL {mcp} is not on the schema servers host {server}")
+    failures += 1
+elif mcp:
+    print(f"  ok: MCP URL on the schema servers host ({mcp})")
+
+sys.exit(1 if failures else 0)
+PY
+[ $? -ne 0 ] && FAILURES=$((FAILURES + 1))
+
+# -- 5a. rate limits quoted in prose match rack_attack.rb ----------------------
 RACK_ATTACK="$APP/config/initializers/rack_attack.rb"
 if [ -f "$RACK_ATTACK" ]; then
   per_key=$(grep -Eo 'api_rate_limit *= *[0-9]+' "$RACK_ATTACK" | grep -Eo '[0-9]+' | head -1)
@@ -84,7 +117,7 @@ else
   skip "rate-limit check ($RACK_ATTACK not found)"
 fi
 
-# -- 4b. API key prefix in prose and schema matches api_key.rb -----------------
+# -- 5b. API key prefix in prose and schema matches api_key.rb -----------------
 API_KEY_RB="$APP/app/models/api_key.rb"
 if [ -f "$API_KEY_RB" ]; then
   prefix=$(grep -Eo 'KEY_PREFIX *= *"[^"]+"' "$API_KEY_RB" | sed -E 's/.*"([^"]+)".*/\1/')
@@ -118,7 +151,7 @@ fi
 
 echo
 if [ "$FAILURES" -gt 0 ]; then
-  echo "$FAILURES drift problem(s) found."
+  echo "$FAILURES drift check(s) failed — see FAIL lines above."
   exit 1
 fi
 echo "No drift detected."

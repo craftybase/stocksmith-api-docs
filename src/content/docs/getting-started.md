@@ -12,8 +12,12 @@ but not yet available.
 ## Base URL
 
 ```
-https://app.craftybase.com/api/v1
+https://api.stocksmith.io/api/v1
 ```
+
+The previous base URL (`https://app.craftybase.com/api/v1`) returns a `302` redirect to
+the new host. Update your clients rather than relying on it — many HTTP clients drop the
+`Authorization` header when following cross-host redirects.
 
 ## Quick start
 
@@ -21,7 +25,7 @@ https://app.craftybase.com/api/v1
 2. **Verify the key** with the ping endpoint, passing it as a Bearer token:
 
    ```bash
-   curl https://app.craftybase.com/api/v1/ping \
+   curl https://api.stocksmith.io/api/v1/ping \
      -H "Authorization: Bearer live_your_key_here"
    ```
 
