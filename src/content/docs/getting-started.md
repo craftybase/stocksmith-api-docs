@@ -3,8 +3,11 @@ title: Getting Started
 description: How to start using the Stocksmith API.
 ---
 
-The Stocksmith API is a REST API that returns JSON. It lets you read and write your
-inventory — materials, products, recipes, and manufactures — programmatically.
+The Stocksmith API is a REST API that returns JSON. It gives you programmatic read access
+to your inventory — materials, products, components, recipes, manufactures, and expenses.
+
+The API is currently **read-only**: every endpoint is a `GET`. Write endpoints are planned
+but not yet available.
 
 ## Base URL
 
@@ -15,18 +18,46 @@ https://app.craftybase.com/api/v1
 ## Quick start
 
 1. **Generate an API key** in Stocksmith under **Settings → API Keys**. See [Authentication](/authentication/).
-2. **Make a request**, passing your key as a Bearer token:
+2. **Verify the key** with the ping endpoint, passing it as a Bearer token:
 
    ```bash
-   curl https://app.craftybase.com/api/v1/account \
-     -H "Authorization: Bearer cb_live_your_key_here"
+   curl https://app.craftybase.com/api/v1/ping \
+     -H "Authorization: Bearer live_your_key_here"
    ```
 
 3. **Explore the endpoints** in the [API Reference](/reference/).
 
+## Resources
+
+| Resource | Endpoints |
+|----------|-----------|
+| Ping | `GET /ping` — health check, verifies the token |
+| Account | `GET /account` |
+| Materials | `GET /materials`, `GET /materials/{id}` |
+| Products | `GET /products`, `GET /products/{id}` |
+| Components | `GET /components`, `GET /components/{id}` |
+| Recipes | `GET /recipes`, `GET /recipes/{id}` |
+| Manufactures | `GET /manufactures`, `GET /manufactures/{id}` |
+| Expenses | `GET /expenses`, `GET /expenses/{id}` |
+
+## Filtering catalog lists
+
+The catalog list endpoints (`/materials`, `/products`, `/components`) accept these
+optional filters, combined with AND:
+
+| Parameter | Behaviour |
+|-----------|-----------|
+| `state` | `active` (default), `archived`, or `all`. |
+| `name` | Substring match on name. |
+| `sku` | Exact SKU match. |
+| `category_name` | Substring match on category name. |
+
 ## Conventions
 
 - All responses are JSON.
-- The API uses **customer-facing names**: `materials` and `products` (not the internal "items" / "projects").
+- The API uses **customer-facing names**: `materials` and `products` (not the internal
+  "items" / "projects").
 - List endpoints are paginated — see [Pagination](/pagination/).
-- Money values are returned as objects with `amount` and `currency_code`.
+- Money values are objects with a decimal-string `amount` and a `currency_code` — never
+  bare floats: `{ "amount": "8.75", "currency_code": "USD" }`.
+- Timestamps are ISO 8601 strings.

@@ -9,7 +9,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'Stocksmith API',
-      description: 'REST API for materials, products, recipes, and manufactures.',
+      description: 'REST API for materials, products, components, recipes, manufactures, and expenses.',
       favicon: '/favicon.svg',
       // Logos are named by their own colour, so map by theme function:
       // black wordmark on light backgrounds, white wordmark on dark backgrounds.
@@ -57,8 +57,6 @@ export default defineConfig({
         { label: 'Getting Started', slug: 'getting-started' },
         { label: 'Authentication', slug: 'authentication' },
         { label: 'Pagination', slug: 'pagination' },
-        { label: 'Migration Order', slug: 'migration-order' },
-        { label: 'Stock Side-Effects', slug: 'stock-side-effects' },
         { label: 'Errors & Validation', slug: 'errors' },
         { label: 'Rate Limiting', slug: 'rate-limiting' },
         { label: 'Agents & LLMs', slug: 'agents' },
