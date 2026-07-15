@@ -1,5 +1,5 @@
 {
-  "openapi": "3.1.0",
+  "openapi": "3.0.3",
   "info": {
     "title": "Stocksmith API",
     "version": "v1",
@@ -189,9 +189,9 @@
           {
             "name": "state",
             "in": "query",
-            "type": "string",
             "required": false,
             "schema": {
+              "type": "string",
               "enum": [
                 "active",
                 "archived",
@@ -1525,9 +1525,9 @@
           {
             "name": "state",
             "in": "query",
-            "type": "string",
             "required": false,
             "schema": {
+              "type": "string",
               "enum": [
                 "active",
                 "archived",
@@ -1894,9 +1894,9 @@
           {
             "name": "state",
             "in": "query",
-            "type": "string",
             "required": false,
             "schema": {
+              "type": "string",
               "enum": [
                 "active",
                 "archived",
