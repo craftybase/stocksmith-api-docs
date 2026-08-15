@@ -3,7 +3,7 @@ title: Rate Limiting
 description: API rate limits and how to handle them.
 ---
 
-Authenticated requests are limited to **120 requests per minute per API key**.
+Authenticated requests are limited to **1,000 requests per minute per API key**.
 Unauthenticated requests (missing or malformed token) are limited to
 **20 requests per minute per IP**.
 

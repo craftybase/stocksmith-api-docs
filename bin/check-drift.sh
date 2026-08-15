@@ -103,11 +103,15 @@ PY
 # -- 5a. rate limits quoted in prose match rack_attack.rb ----------------------
 RACK_ATTACK="$APP/config/initializers/rack_attack.rb"
 if [ -f "$RACK_ATTACK" ]; then
-  per_key=$(grep -Eo 'api_rate_limit *= *[0-9]+' "$RACK_ATTACK" | grep -Eo '[0-9]+' | head -1)
-  per_ip=$(grep -Eo 'api_unauthenticated_limit *= *[0-9]+' "$RACK_ATTACK" | grep -Eo '[0-9]+' | head -1)
+  # Ruby allows digit separators (1_000), so read the value after the '=' and strip
+  # them — a bare [0-9]+ stops at the underscore and yields 1.
+  rack_limit() { sed -nE "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*([0-9_]+).*/\1/p" "$RACK_ATTACK" | head -1 | tr -d '_'; }
+  per_key=$(rack_limit api_rate_limit)
+  per_ip=$(rack_limit api_unauthenticated_limit)
   for pair in "$per_key:per API key" "$per_ip:per IP"; do
     limit="${pair%%:*}" label="${pair#*:}"
-    if grep -q "$limit requests per minute" "$DOCS/rate-limiting.md"; then
+    # Commas stripped from the prose so "1,000 requests per minute" still matches.
+    if tr -d ',' < "$DOCS/rate-limiting.md" | grep -q "$limit requests per minute"; then
       ok "rate limit $limit/min ($label) documented"
     else
       fail "rate-limiting.md does not say '$limit requests per minute' ($label, per rack_attack.rb)"

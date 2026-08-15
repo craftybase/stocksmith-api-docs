@@ -24,7 +24,7 @@ re-sync.
   the current beta (all endpoints GET); write endpoints are Phase B and not yet built.
 - Verify claims against the code, not memory: auth in
   `app/controllers/concerns/api/api_key_authentication.rb`, limits in
-  `config/initializers/rack_attack.rb` (120/min per key, 20/min per IP), pagination and
+  `config/initializers/rack_attack.rb` (1,000/min per key, 20/min per IP), pagination and
   errors in `app/controllers/api/v1/base_controller.rb`, key format in
   `app/models/api_key.rb` (`live_` prefix), MCP server in
   `app/controllers/api/mcp/server_controller.rb` (served at api.stocksmith.io/mcp).
