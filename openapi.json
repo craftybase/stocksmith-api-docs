@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://app.craftybase.com",
+      "url": "https://api.stocksmith.io",
       "description": "Production"
     }
   ],
@@ -16,7 +16,7 @@
       "bearer_auth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "Personal API key (cb_live_...) passed as a Bearer token"
+        "description": "Personal API key (live_...) passed as a Bearer token"
       }
     },
     "schemas": {
