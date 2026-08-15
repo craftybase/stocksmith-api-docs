@@ -2433,14 +2433,34 @@
                                 "id": {
                                   "type": "integer"
                                 },
+                                "ingredient_type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "material",
+                                    "component"
+                                  ],
+                                  "description": "Which endpoint resolves ingredient_id: materials for 'material', components for 'component'"
+                                },
+                                "ingredient_id": {
+                                  "type": "integer",
+                                  "nullable": true,
+                                  "description": "ID of the material or component. Null only when a component's record is missing"
+                                },
+                                "ingredient_name": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
                                 "material_id": {
                                   "type": "integer",
                                   "nullable": true,
-                                  "description": "ID of the material ingredient"
+                                  "deprecated": true,
+                                  "description": "Deprecated: use ingredient_id. Populated for materials only, null for components"
                                 },
                                 "material_name": {
                                   "type": "string",
-                                  "nullable": true
+                                  "nullable": true,
+                                  "deprecated": true,
+                                  "description": "Deprecated: use ingredient_name"
                                 },
                                 "quantity": {
                                   "type": "string",
@@ -2605,14 +2625,34 @@
                               "id": {
                                 "type": "integer"
                               },
+                              "ingredient_type": {
+                                "type": "string",
+                                "enum": [
+                                  "material",
+                                  "component"
+                                ],
+                                "description": "Which endpoint resolves ingredient_id: materials for 'material', components for 'component'"
+                              },
+                              "ingredient_id": {
+                                "type": "integer",
+                                "nullable": true,
+                                "description": "ID of the material or component. Null only when a component's record is missing"
+                              },
+                              "ingredient_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
                               "material_id": {
                                 "type": "integer",
                                 "nullable": true,
-                                "description": "ID of the material ingredient"
+                                "deprecated": true,
+                                "description": "Deprecated: use ingredient_id. Populated for materials only, null for components"
                               },
                               "material_name": {
                                 "type": "string",
-                                "nullable": true
+                                "nullable": true,
+                                "deprecated": true,
+                                "description": "Deprecated: use ingredient_name"
                               },
                               "quantity": {
                                 "type": "string",
