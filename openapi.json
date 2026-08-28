@@ -704,6 +704,15 @@
             "schema": {
               "type": "integer"
             }
+          },
+          {
+            "name": "received_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by receipt status. Comma-separated for multiple (e.g. 'partial,outstanding'). One or more of: received, partial, outstanding."
           }
         ],
         "responses": {
@@ -726,6 +735,7 @@
                           "id",
                           "paid",
                           "received",
+                          "received_status",
                           "line_items",
                           "created_at",
                           "updated_at"
@@ -762,6 +772,15 @@
                           },
                           "received": {
                             "type": "boolean"
+                          },
+                          "received_status": {
+                            "type": "string",
+                            "enum": [
+                              "received",
+                              "partial",
+                              "outstanding"
+                            ],
+                            "description": "Line-item receipt rollup: all lines received, some received, or none received. \"received\" for a purchase with zero line items."
                           },
                           "notes": {
                             "type": "string",
@@ -809,6 +828,10 @@
                                 "material_expense": {
                                   "type": "boolean",
                                   "description": "True when this line is a material purchase"
+                                },
+                                "received": {
+                                  "type": "boolean",
+                                  "description": "True when this line has been received"
                                 },
                                 "category_id": {
                                   "type": "integer",
@@ -917,6 +940,7 @@
                         "id",
                         "paid",
                         "received",
+                        "received_status",
                         "line_items",
                         "created_at",
                         "updated_at"
@@ -953,6 +977,15 @@
                         },
                         "received": {
                           "type": "boolean"
+                        },
+                        "received_status": {
+                          "type": "string",
+                          "enum": [
+                            "received",
+                            "partial",
+                            "outstanding"
+                          ],
+                          "description": "Line-item receipt rollup: all lines received, some received, or none received. \"received\" for a purchase with zero line items."
                         },
                         "notes": {
                           "type": "string",
@@ -1000,6 +1033,10 @@
                               "material_expense": {
                                 "type": "boolean",
                                 "description": "True when this line is a material purchase"
+                              },
+                              "received": {
+                                "type": "boolean",
+                                "description": "True when this line has been received"
                               },
                               "category_id": {
                                 "type": "integer",
@@ -1587,6 +1624,7 @@
                           "committed_stock",
                           "available_stock",
                           "reorder_level",
+                          "on_order",
                           "state",
                           "created_at",
                           "updated_at"
@@ -1626,6 +1664,10 @@
                           "reorder_level": {
                             "type": "string",
                             "description": "Decimal string"
+                          },
+                          "on_order": {
+                            "type": "string",
+                            "description": "Decimal string, stock units (not purchase units)"
                           },
                           "state": {
                             "type": "string",
@@ -1715,6 +1757,7 @@
                         "committed_stock",
                         "available_stock",
                         "reorder_level",
+                        "on_order",
                         "state",
                         "created_at",
                         "updated_at"
@@ -1754,6 +1797,10 @@
                         "reorder_level": {
                           "type": "string",
                           "description": "Decimal string"
+                        },
+                        "on_order": {
+                          "type": "string",
+                          "description": "Decimal string, stock units (not purchase units)"
                         },
                         "state": {
                           "type": "string",
