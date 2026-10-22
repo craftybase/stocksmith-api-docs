@@ -6,7 +6,8 @@
 #   1. openapi.json here matches the committed schema in craftybase-app
 #   2. every API path mentioned in the prose exists in openapi.json
 #   3. every path in openapi.json is mentioned somewhere in the prose
-#   4. the base URL and MCP URL in the prose sit on the schema's servers host
+#   4. the base URL in the prose sits on the schema's servers host, and the MCP
+#      URL is the app's MCP host (config/initializers/mcp.rb)
 #   5. facts quoted in the prose match the app code:
 #      - rate limits (config/initializers/rack_attack.rb)
 #      - the API key prefix (app/models/api_key.rb), in prose and in the
@@ -68,11 +69,12 @@ sys.exit(1 if failures else 0)
 PY
 [ $? -ne 0 ] && FAILURES=$((FAILURES + 1))
 
-# -- 4. base URL / MCP URL match the schema servers entry ----------------------
-python3 - "$DOCS" <<'PY'
+# -- 4. base URL matches the schema servers entry; MCP URL matches the app -----
+python3 - "$DOCS" "$APP" <<'PY'
 import json, pathlib, re, sys
 
 docs = pathlib.Path(sys.argv[1])
+initializer = pathlib.Path(sys.argv[2]) / "config/initializers/mcp.rb"
 server = json.load(open("openapi.json"))["servers"][0]["url"].rstrip("/")
 failures = 0
 
@@ -89,12 +91,18 @@ if base != f"{server}/api/v1":
 else:
     print(f"  ok: base URL matches schema servers entry ({base})")
 
+# The MCP transport answers 403 on any host but this one, so it is not the REST host.
 mcp = block_after("## MCP server", (docs / "agents.md").read_text())
-if mcp and not mcp.startswith(server + "/"):
-    print(f"FAIL: agents.md MCP URL {mcp} is not on the schema servers host {server}")
-    failures += 1
+if mcp and initializer.exists():
+    host = re.search(r'ENV\.fetch\("MCP_HOST",\s*"([^"]+)"\)', initializer.read_text())
+    expected = f"https://{host.group(1)}/mcp" if host else "(no MCP_HOST default found)"
+    if mcp != expected:
+        print(f"FAIL: agents.md MCP URL {mcp} is not the app's MCP endpoint {expected}")
+        failures += 1
+    else:
+        print(f"  ok: MCP URL matches the app's MCP host ({mcp})")
 elif mcp:
-    print(f"  ok: MCP URL on the schema servers host ({mcp})")
+    print("skip: MCP URL check (app not checked out)")
 
 sys.exit(1 if failures else 0)
 PY
