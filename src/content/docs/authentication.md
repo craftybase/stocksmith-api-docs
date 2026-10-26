@@ -11,9 +11,9 @@ Go to **Settings → API Keys** in Stocksmith and create a key. Copy it immediat
 full key (`live_…`) is shown only once; after that only a masked form is displayed. Keys
 are managed by the account's primary user.
 
-API access is currently in beta and is enabled per account, independent of plan. Requests
-from an account without access return `403` with
-`API access is not enabled for this account`.
+API access is currently in beta and is available on the Business and Growth plans,
+including trial accounts on those plans. Requests from an account without access return
+`403` with `API access is not enabled for this account`.
 
 ## Making authenticated requests
 
