@@ -11,7 +11,7 @@ Stocksmith exposes the same read-only capabilities as a hosted
 [MCP](https://modelcontextprotocol.io) server using the Streamable HTTP transport:
 
 ```
-https://api.stocksmith.io/mcp
+https://mcp.stocksmith.io/mcp
 ```
 
 Authenticate with the same Bearer API key you use for the REST API (see
@@ -27,7 +27,7 @@ Example client configuration:
   "mcpServers": {
     "stocksmith": {
       "type": "http",
-      "url": "https://api.stocksmith.io/mcp",
+      "url": "https://mcp.stocksmith.io/mcp",
       "headers": { "Authorization": "Bearer live_your_key_here" }
     }
   }
