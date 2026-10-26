@@ -59,6 +59,7 @@ export default defineConfig({
         { label: 'Pagination', slug: 'pagination' },
         { label: 'Errors & Validation', slug: 'errors' },
         { label: 'Rate Limiting', slug: 'rate-limiting' },
+        { label: 'Versioning', slug: 'versioning' },
         { label: 'Agents & LLMs', slug: 'agents' },
         // API reference groups generated from the OpenAPI schema.
         ...openAPISidebarGroups,

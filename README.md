@@ -72,9 +72,10 @@ edit — this map is how the docs were written and audited:
 | API Reference (everything under `/reference/`) | `docs/api/openapi.json` ← rswag specs + `spec/swagger_helper.rb` |
 
 Current state worth knowing: the API is **read-only** (beta, "Phase A" — every endpoint
-is a `GET`; access is per-account via the `public_api` flag, independent of plan). When
-Phase B ships write endpoints, the guides gain the write-side story (validation errors,
-stock side-effects, migration ordering) — as shipped behavior, not before.
+is a `GET`; access is for the Business and Growth plans, trial accounts on those plans
+included, via the `public_api` flag). When Phase B ships write endpoints, the guides gain
+the write-side story (validation errors, stock side-effects, migration ordering) — as
+shipped behavior, not before.
 
 ## Local development
 
