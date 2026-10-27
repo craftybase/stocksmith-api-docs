@@ -3,7 +3,7 @@
   "info": {
     "title": "Stocksmith API",
     "version": "v1",
-    "description": "REST API for reading and writing materials, products, recipes, and manufactures."
+    "description": "REST API for reading materials, products, components, recipes, manufactures, and expenses."
   },
   "servers": [
     {
@@ -72,9 +72,7 @@
   },
   "security": [
     {
-      "bearer_auth": [
-
-      ]
+      "bearer_auth": []
     }
   ],
   "paths": {
@@ -86,9 +84,7 @@
         ],
         "security": [
           {
-            "bearer_auth": [
-
-            ]
+            "bearer_auth": []
           }
         ],
         "responses": {
@@ -162,9 +158,7 @@
         ],
         "security": [
           {
-            "bearer_auth": [
-
-            ]
+            "bearer_auth": []
           }
         ],
         "parameters": [
@@ -422,9 +416,7 @@
         ],
         "security": [
           {
-            "bearer_auth": [
-
-            ]
+            "bearer_auth": []
           }
         ],
         "parameters": [
@@ -635,9 +627,7 @@
         ],
         "security": [
           {
-            "bearer_auth": [
-
-            ]
+            "bearer_auth": []
           }
         ],
         "description": "Requires financial access (view_material_costs permission). Returns 403 if the authenticated user lacks this permission.",
@@ -906,9 +896,7 @@
         ],
         "security": [
           {
-            "bearer_auth": [
-
-            ]
+            "bearer_auth": []
           }
         ],
         "description": "Requires financial access (view_material_costs permission). Returns 403 if the authenticated user lacks this permission.",
@@ -1117,9 +1105,7 @@
         ],
         "security": [
           {
-            "bearer_auth": [
-
-            ]
+            "bearer_auth": []
           }
         ],
         "parameters": [
@@ -1139,6 +1125,47 @@
             "description": "Results per page (default: 25, max: 100)",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "product_id",
+            "in": "query",
+            "required": false,
+            "description": "Filter by product ID",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "not_started",
+                "work_in_progress",
+                "completed"
+              ]
+            },
+            "description": "Filter by production status"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "Filter by start date on or after this ISO 8601 date (e.g. 2026-01-01). A malformed date is ignored, not rejected.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "Filter by start date on or before this ISO 8601 date (e.g. 2026-12-31). A malformed date is ignored, not rejected.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -1186,7 +1213,11 @@
                           },
                           "production_status": {
                             "type": "string",
-                            "description": "e.g. 'planned', 'in_progress', 'completed'"
+                            "enum": [
+                              "not_started",
+                              "work_in_progress",
+                              "completed"
+                            ]
                           },
                           "quantity": {
                             "type": "string",
@@ -1329,9 +1360,7 @@
         ],
         "security": [
           {
-            "bearer_auth": [
-
-            ]
+            "bearer_auth": []
           }
         ],
         "parameters": [
@@ -1386,7 +1415,11 @@
                         },
                         "production_status": {
                           "type": "string",
-                          "description": "e.g. 'planned', 'in_progress', 'completed'"
+                          "enum": [
+                            "not_started",
+                            "work_in_progress",
+                            "completed"
+                          ]
                         },
                         "quantity": {
                           "type": "string",
@@ -1535,9 +1568,7 @@
         ],
         "security": [
           {
-            "bearer_auth": [
-
-            ]
+            "bearer_auth": []
           }
         ],
         "parameters": [
@@ -1721,9 +1752,7 @@
         ],
         "security": [
           {
-            "bearer_auth": [
-
-            ]
+            "bearer_auth": []
           }
         ],
         "parameters": [
@@ -1860,9 +1889,7 @@
         ],
         "security": [
           {
-            "bearer_auth": [
-
-            ]
+            "bearer_auth": []
           }
         ],
         "responses": {
@@ -1914,9 +1941,7 @@
         ],
         "security": [
           {
-            "bearer_auth": [
-
-            ]
+            "bearer_auth": []
           }
         ],
         "parameters": [
@@ -2174,9 +2199,7 @@
         ],
         "security": [
           {
-            "bearer_auth": [
-
-            ]
+            "bearer_auth": []
           }
         ],
         "parameters": [
@@ -2387,9 +2410,7 @@
         ],
         "security": [
           {
-            "bearer_auth": [
-
-            ]
+            "bearer_auth": []
           }
         ],
         "parameters": [
@@ -2409,6 +2430,33 @@
             "description": "Results per page (default: 25, max: 100)",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "product_id",
+            "in": "query",
+            "required": false,
+            "description": "Filter by product ID, including the product's variation-specific recipes. A non-integer value returns 400.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "variation_id",
+            "in": "query",
+            "required": false,
+            "description": "Filter by variation ID. A non-integer value returns 400.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "updated_since",
+            "in": "query",
+            "required": false,
+            "description": "Filter by last-modified on or after this ISO 8601 timestamp (e.g. 2026-06-20T00:00:00Z). A recipe counts as modified when it or any of its ingredients changed. A malformed value returns 400.",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -2591,9 +2639,7 @@
         ],
         "security": [
           {
-            "bearer_auth": [
-
-            ]
+            "bearer_auth": []
           }
         ],
         "parameters": [
