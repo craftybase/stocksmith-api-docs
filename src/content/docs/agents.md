@@ -20,6 +20,10 @@ REST endpoints — `ping`, `get_account`, plus `list_*` / `get_*` for materials,
 components, recipes, manufactures, and expenses. The same
 [rate limits](/rate-limiting/) apply.
 
+The MCP server is available on the same plans as the REST API: Business and Growth,
+including trial accounts on those plans. Requests from an account without access return
+`403` with `API access is not enabled for this account`.
+
 Example client configuration:
 
 ```json
