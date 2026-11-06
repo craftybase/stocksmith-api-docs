@@ -220,6 +220,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "updated_since",
+            "in": "query",
+            "required": false,
+            "description": "Return only components changed at or after this ISO 8601 timestamp, compared to the whole second (e.g. 2026-06-20T00:00:00Z; include a time zone), newest first. A component counts as changed when its details, stock counts or variations change (a variation's details or stock counts, or a variation being added or removed). Renaming a category, or a variation's attribute label or value, does not count. Pass state=all to include archived components. Removed components are not reported, so do a full read now and then. A malformed value returns 400.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1167,6 +1176,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "updated_since",
+            "in": "query",
+            "required": false,
+            "description": "Return only manufactures changed at or after this ISO 8601 timestamp, compared to the whole second (e.g. 2026-06-20T00:00:00Z; include a time zone), newest first. A manufacture counts as changed when it or any of its line items change, including a re-cost after a purchase is edited. Renaming a material does not count. Removed manufactures are not reported, so do a full read now and then. A malformed value returns 400, unlike from and to, which are ignored when malformed.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1630,6 +1648,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "updated_since",
+            "in": "query",
+            "required": false,
+            "description": "Return only materials changed at or after this ISO 8601 timestamp, compared to the whole second (e.g. 2026-06-20T00:00:00Z; include a time zone), newest first. A material counts as changed when its details, stock count, cost or on-order quantity change. Renaming a category or unit of measure does not count. Pass state=all to include archived materials. Removed materials are not reported, so do a full read now and then. A malformed value returns 400.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2000,6 +2027,15 @@
             "in": "query",
             "required": false,
             "description": "Partial category name filter (case-insensitive substring match)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "updated_since",
+            "in": "query",
+            "required": false,
+            "description": "Return only products changed at or after this ISO 8601 timestamp, compared to the whole second (e.g. 2026-06-20T00:00:00Z; include a time zone), newest first. A product counts as changed when its details, stock counts or variations change (a variation's details or stock counts, or a variation being added or removed). Renaming a category, or a variation's attribute label or value, does not count. Pass state=all to include archived products. Removed products are not reported, so do a full read now and then. A malformed value returns 400.",
             "schema": {
               "type": "string"
             }
