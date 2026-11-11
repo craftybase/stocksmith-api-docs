@@ -4,7 +4,8 @@ description: How to start using the Stocksmith API.
 ---
 
 The Stocksmith API is a REST API that returns JSON. It gives you programmatic read access
-to your inventory — materials, products, components, recipes, manufactures, and expenses.
+to your inventory — materials, products, components, recipes, manufactures, expenses, and
+inventory adjustments.
 
 The API is currently **read-only**: every endpoint is a `GET`. Write endpoints are planned
 but not yet available.
@@ -43,6 +44,7 @@ the new host. Update your clients rather than relying on it — many HTTP client
 | Recipes | `GET /recipes`, `GET /recipes/{id}` |
 | Manufactures | `GET /manufactures`, `GET /manufactures/{id}` |
 | Expenses | `GET /expenses`, `GET /expenses/{id}` |
+| Inventory adjustments | `GET /inventory_adjustments`, `GET /materials/{material_id}/inventory_adjustments`, `GET /components/{component_id}/inventory_adjustments` |
 
 ## Filtering catalog lists
 
