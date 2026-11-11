@@ -3,7 +3,7 @@
   "info": {
     "title": "Stocksmith API",
     "version": "v1",
-    "description": "REST API for reading materials, products, components, recipes, manufactures, and expenses."
+    "description": "REST API for reading materials, products, components, recipes, manufactures, expenses and inventory adjustments."
   },
   "servers": [
     {
@@ -1095,6 +1095,680 @@
           },
           "404": {
             "description": "expense not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory_adjustments": {
+      "get": {
+        "summary": "List the account's inventory adjustments",
+        "tags": [
+          "Inventory adjustments"
+        ],
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ],
+        "description": "Inventory adjustments, oldest first. An inventory adjustment is one change to stock: starting stock, a purchase, a manufacture, a manual adjustment or a stocktake. Read one material's (`/materials/{id}/inventory_adjustments`), one component's (`/components/{id}/inventory_adjustments`) or the whole account's (`/inventory_adjustments`); the same filters work on all three.\n\nAdjustments on the same day come in the order their balance was worked out, so in an unfiltered read of one material or component each `balance_after` is the one before plus `quantity`. `balance_after` is the running balance on the material's history tab. It counts purchases still on order, so the newest `balance_after` is the material's `stock_on_hand` plus its `on_order`.\n\nBalances and costs are recalculated in the background after a change. After a change dated in the past they can be out of date for a while, longer on a material with a very long history.\n\nThese endpoints read adjustments by their date. They do not report adjustments that were deleted, a changed cost on an older adjustment, or an adjustment entered today for an earlier date. To find the materials and components whose stock, on-order quantity or cost changed, read `GET /api/v1/materials` and `GET /api/v1/components` with `updated_since` (and `state=all`), then read their adjustments for the dates you care about, and do a full read now and then. A read paged over time is not a snapshot: an adjustment entered, re-dated or removed while you page can repeat a row or skip one on a later page. `id` lets you drop repeats; nothing recovers a skip, so if `meta.total_count` changes between your first and last page, read the window again.\n\nRead long histories in date windows, a month at a time. A read with no `from` and `to` on a very long history, or on the largest accounts, is slower, and its later pages slower still.\n\nTo read one material's or component's adjustments, use its own path: `material_id` and `component_id` are not filters on this one, and sending either returns 400 naming it.",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "Return adjustments on or after this ISO 8601 date (e.g. 2026-03-01), a day in the account's time zone. Once from or to is set, an adjustment stored without a date is never returned. A malformed value returns 400.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "Return adjustments on or before this ISO 8601 date (e.g. 2026-03-31), the whole day included, in the account's time zone. A malformed value returns 400.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "costed",
+            "in": "query",
+            "required": false,
+            "description": "true returns adjustments that carry a unit cost, false those with none. Stock added by an adjustment or a stocktake is costed at zero. Materials that are not inventoriable have no balance or cost and are left out of this filter. Any other value returns 400.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated, one or more of: starting, purchase, manufacture, adjustment, stocktake. Any other value returns 400.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (default: 1)",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Results per page (default: 25, max: 100)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "paginated list of the account's inventory adjustments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "inventory_adjustments",
+                    "meta"
+                  ],
+                  "properties": {
+                    "inventory_adjustments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "date",
+                          "reason",
+                          "adjuster",
+                          "quantity",
+                          "balance_after",
+                          "received",
+                          "costed",
+                          "material_id",
+                          "material_name",
+                          "component_id",
+                          "component_name",
+                          "category",
+                          "notes"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "date": {
+                            "type": "string",
+                            "format": "date",
+                            "description": "Day of the inventory adjustment in the account's time zone (`time_zone` on `GET /api/v1/account`). An adjustment stored without a date shows the account's start date."
+                          },
+                          "reason": {
+                            "type": "string",
+                            "enum": [
+                              "starting",
+                              "purchase",
+                              "manufacture",
+                              "adjustment",
+                              "stocktake"
+                            ]
+                          },
+                          "adjuster": {
+                            "type": "object",
+                            "nullable": true,
+                            "description": "The record behind the adjustment: a purchase (its id is an expense id, `GET /api/v1/expenses/{id}`), a manufacture (`GET /api/v1/manufactures/{id}`) or a stocktake (not yet readable through the API). Null for starting stock and manual adjustments. For a component, `manufacture` covers both making it (positive `quantity`) and using it in another manufacture (negative).",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "purchase",
+                                  "manufacture",
+                                  "stocktake"
+                                ]
+                              },
+                              "id": {
+                                "type": "integer"
+                              }
+                            }
+                          },
+                          "quantity": {
+                            "type": "string",
+                            "description": "Decimal string, stock units. Negative when stock went down"
+                          },
+                          "balance_after": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Decimal string. The running balance after this adjustment, as the history tab shows it, counting purchases still on order. Null for materials that are not inventoriable."
+                          },
+                          "received": {
+                            "type": "boolean",
+                            "description": "False only for a purchase still on order"
+                          },
+                          "costed": {
+                            "type": "boolean",
+                            "nullable": true,
+                            "description": "True when the adjustment carries a unit cost. Null for materials that are not inventoriable."
+                          },
+                          "unit_cost": {
+                            "$ref": "#/components/schemas/Money",
+                            "nullable": true,
+                            "description": "Omitted for view-only users. Null for materials that are not inventoriable. For a purchase still on order it is the average cost at that point, not the price on the purchase."
+                          },
+                          "material_id": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Null for a component's adjustments"
+                          },
+                          "material_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "component_id": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "The component's id on `/api/v1/components`. Null for a material's adjustments"
+                          },
+                          "component_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "category": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Name of the adjustment category. Null for an adjustment without one, and for a category that has since been removed."
+                          },
+                          "notes": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Null when blank"
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginationMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/materials/{material_id}/inventory_adjustments": {
+      "get": {
+        "summary": "List a material's inventory adjustments",
+        "tags": [
+          "Inventory adjustments"
+        ],
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ],
+        "description": "Inventory adjustments, oldest first. An inventory adjustment is one change to stock: starting stock, a purchase, a manufacture, a manual adjustment or a stocktake. Read one material's (`/materials/{id}/inventory_adjustments`), one component's (`/components/{id}/inventory_adjustments`) or the whole account's (`/inventory_adjustments`); the same filters work on all three.\n\nAdjustments on the same day come in the order their balance was worked out, so in an unfiltered read of one material or component each `balance_after` is the one before plus `quantity`. `balance_after` is the running balance on the material's history tab. It counts purchases still on order, so the newest `balance_after` is the material's `stock_on_hand` plus its `on_order`.\n\nBalances and costs are recalculated in the background after a change. After a change dated in the past they can be out of date for a while, longer on a material with a very long history.\n\nThese endpoints read adjustments by their date. They do not report adjustments that were deleted, a changed cost on an older adjustment, or an adjustment entered today for an earlier date. To find the materials and components whose stock, on-order quantity or cost changed, read `GET /api/v1/materials` and `GET /api/v1/components` with `updated_since` (and `state=all`), then read their adjustments for the dates you care about, and do a full read now and then. A read paged over time is not a snapshot: an adjustment entered, re-dated or removed while you page can repeat a row or skip one on a later page. `id` lets you drop repeats; nothing recovers a skip, so if `meta.total_count` changes between your first and last page, read the window again.\n\nRead long histories in date windows, a month at a time. A read with no `from` and `to` on a very long history, or on the largest accounts, is slower, and its later pages slower still.",
+        "parameters": [
+          {
+            "name": "material_id",
+            "in": "path",
+            "required": true,
+            "description": "Material ID",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "Return adjustments on or after this ISO 8601 date (e.g. 2026-03-01), a day in the account's time zone. Once from or to is set, an adjustment stored without a date is never returned. A malformed value returns 400.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "Return adjustments on or before this ISO 8601 date (e.g. 2026-03-31), the whole day included, in the account's time zone. A malformed value returns 400.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "costed",
+            "in": "query",
+            "required": false,
+            "description": "true returns adjustments that carry a unit cost, false those with none. Stock added by an adjustment or a stocktake is costed at zero. Materials that are not inventoriable have no balance or cost and are left out of this filter. Any other value returns 400.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated, one or more of: starting, purchase, manufacture, adjustment, stocktake. Any other value returns 400.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (default: 1)",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Results per page (default: 25, max: 100)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "paginated list of the material's inventory adjustments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "inventory_adjustments",
+                    "meta"
+                  ],
+                  "properties": {
+                    "inventory_adjustments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "date",
+                          "reason",
+                          "adjuster",
+                          "quantity",
+                          "balance_after",
+                          "received",
+                          "costed",
+                          "material_id",
+                          "material_name",
+                          "component_id",
+                          "component_name",
+                          "category",
+                          "notes"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "date": {
+                            "type": "string",
+                            "format": "date",
+                            "description": "Day of the inventory adjustment in the account's time zone (`time_zone` on `GET /api/v1/account`). An adjustment stored without a date shows the account's start date."
+                          },
+                          "reason": {
+                            "type": "string",
+                            "enum": [
+                              "starting",
+                              "purchase",
+                              "manufacture",
+                              "adjustment",
+                              "stocktake"
+                            ]
+                          },
+                          "adjuster": {
+                            "type": "object",
+                            "nullable": true,
+                            "description": "The record behind the adjustment: a purchase (its id is an expense id, `GET /api/v1/expenses/{id}`), a manufacture (`GET /api/v1/manufactures/{id}`) or a stocktake (not yet readable through the API). Null for starting stock and manual adjustments. For a component, `manufacture` covers both making it (positive `quantity`) and using it in another manufacture (negative).",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "purchase",
+                                  "manufacture",
+                                  "stocktake"
+                                ]
+                              },
+                              "id": {
+                                "type": "integer"
+                              }
+                            }
+                          },
+                          "quantity": {
+                            "type": "string",
+                            "description": "Decimal string, stock units. Negative when stock went down"
+                          },
+                          "balance_after": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Decimal string. The running balance after this adjustment, as the history tab shows it, counting purchases still on order. Null for materials that are not inventoriable."
+                          },
+                          "received": {
+                            "type": "boolean",
+                            "description": "False only for a purchase still on order"
+                          },
+                          "costed": {
+                            "type": "boolean",
+                            "nullable": true,
+                            "description": "True when the adjustment carries a unit cost. Null for materials that are not inventoriable."
+                          },
+                          "unit_cost": {
+                            "$ref": "#/components/schemas/Money",
+                            "nullable": true,
+                            "description": "Omitted for view-only users. Null for materials that are not inventoriable. For a purchase still on order it is the average cost at that point, not the price on the purchase."
+                          },
+                          "material_id": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Null for a component's adjustments"
+                          },
+                          "material_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "component_id": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "The component's id on `/api/v1/components`. Null for a material's adjustments"
+                          },
+                          "component_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "category": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Name of the adjustment category. Null for an adjustment without one, and for a category that has since been removed."
+                          },
+                          "notes": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Null when blank"
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginationMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "material not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/components/{component_id}/inventory_adjustments": {
+      "get": {
+        "summary": "List a component's inventory adjustments",
+        "tags": [
+          "Inventory adjustments"
+        ],
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ],
+        "description": "Inventory adjustments, oldest first. An inventory adjustment is one change to stock: starting stock, a purchase, a manufacture, a manual adjustment or a stocktake. Read one material's (`/materials/{id}/inventory_adjustments`), one component's (`/components/{id}/inventory_adjustments`) or the whole account's (`/inventory_adjustments`); the same filters work on all three.\n\nAdjustments on the same day come in the order their balance was worked out, so in an unfiltered read of one material or component each `balance_after` is the one before plus `quantity`. `balance_after` is the running balance on the material's history tab. It counts purchases still on order, so the newest `balance_after` is the material's `stock_on_hand` plus its `on_order`.\n\nBalances and costs are recalculated in the background after a change. After a change dated in the past they can be out of date for a while, longer on a material with a very long history.\n\nThese endpoints read adjustments by their date. They do not report adjustments that were deleted, a changed cost on an older adjustment, or an adjustment entered today for an earlier date. To find the materials and components whose stock, on-order quantity or cost changed, read `GET /api/v1/materials` and `GET /api/v1/components` with `updated_since` (and `state=all`), then read their adjustments for the dates you care about, and do a full read now and then. A read paged over time is not a snapshot: an adjustment entered, re-dated or removed while you page can repeat a row or skip one on a later page. `id` lets you drop repeats; nothing recovers a skip, so if `meta.total_count` changes between your first and last page, read the window again.\n\nRead long histories in date windows, a month at a time. A read with no `from` and `to` on a very long history, or on the largest accounts, is slower, and its later pages slower still.",
+        "parameters": [
+          {
+            "name": "component_id",
+            "in": "path",
+            "required": true,
+            "description": "Component ID",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "Return adjustments on or after this ISO 8601 date (e.g. 2026-03-01), a day in the account's time zone. Once from or to is set, an adjustment stored without a date is never returned. A malformed value returns 400.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "Return adjustments on or before this ISO 8601 date (e.g. 2026-03-31), the whole day included, in the account's time zone. A malformed value returns 400.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "costed",
+            "in": "query",
+            "required": false,
+            "description": "true returns adjustments that carry a unit cost, false those with none. Stock added by an adjustment or a stocktake is costed at zero. Materials that are not inventoriable have no balance or cost and are left out of this filter. Any other value returns 400.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated, one or more of: starting, purchase, manufacture, adjustment, stocktake. Any other value returns 400.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (default: 1)",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Results per page (default: 25, max: 100)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "paginated list of the component's inventory adjustments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "inventory_adjustments",
+                    "meta"
+                  ],
+                  "properties": {
+                    "inventory_adjustments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "date",
+                          "reason",
+                          "adjuster",
+                          "quantity",
+                          "balance_after",
+                          "received",
+                          "costed",
+                          "material_id",
+                          "material_name",
+                          "component_id",
+                          "component_name",
+                          "category",
+                          "notes"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "date": {
+                            "type": "string",
+                            "format": "date",
+                            "description": "Day of the inventory adjustment in the account's time zone (`time_zone` on `GET /api/v1/account`). An adjustment stored without a date shows the account's start date."
+                          },
+                          "reason": {
+                            "type": "string",
+                            "enum": [
+                              "starting",
+                              "purchase",
+                              "manufacture",
+                              "adjustment",
+                              "stocktake"
+                            ]
+                          },
+                          "adjuster": {
+                            "type": "object",
+                            "nullable": true,
+                            "description": "The record behind the adjustment: a purchase (its id is an expense id, `GET /api/v1/expenses/{id}`), a manufacture (`GET /api/v1/manufactures/{id}`) or a stocktake (not yet readable through the API). Null for starting stock and manual adjustments. For a component, `manufacture` covers both making it (positive `quantity`) and using it in another manufacture (negative).",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "purchase",
+                                  "manufacture",
+                                  "stocktake"
+                                ]
+                              },
+                              "id": {
+                                "type": "integer"
+                              }
+                            }
+                          },
+                          "quantity": {
+                            "type": "string",
+                            "description": "Decimal string, stock units. Negative when stock went down"
+                          },
+                          "balance_after": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Decimal string. The running balance after this adjustment, as the history tab shows it, counting purchases still on order. Null for materials that are not inventoriable."
+                          },
+                          "received": {
+                            "type": "boolean",
+                            "description": "False only for a purchase still on order"
+                          },
+                          "costed": {
+                            "type": "boolean",
+                            "nullable": true,
+                            "description": "True when the adjustment carries a unit cost. Null for materials that are not inventoriable."
+                          },
+                          "unit_cost": {
+                            "$ref": "#/components/schemas/Money",
+                            "nullable": true,
+                            "description": "Omitted for view-only users. Null for materials that are not inventoriable. For a purchase still on order it is the average cost at that point, not the price on the purchase."
+                          },
+                          "material_id": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Null for a component's adjustments"
+                          },
+                          "material_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "component_id": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "The component's id on `/api/v1/components`. Null for a material's adjustments"
+                          },
+                          "component_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "category": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Name of the adjustment category. Null for an adjustment without one, and for a category that has since been removed."
+                          },
+                          "notes": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Null when blank"
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginationMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "component not found",
             "content": {
               "application/json": {
                 "schema": {
