@@ -16,9 +16,9 @@ https://mcp.stocksmith.io/mcp
 
 Authenticate with the same Bearer API key you use for the REST API (see
 [Authentication](/authentication/)). The server exposes read-only tools that mirror the
-REST endpoints — `ping`, `get_account`, plus `list_*` / `get_*` for materials, products,
-components, recipes, manufactures, and expenses. The same
-[rate limits](/rate-limiting/) apply.
+REST endpoints — `ping`, `get_account`, `list_*` / `get_*` for materials, products,
+components, recipes, manufactures, and expenses, plus `list_inventory_adjustments`. The
+same [rate limits](/rate-limiting/) apply.
 
 The MCP server is available on the same plans as the REST API: Business and Growth,
 including trial accounts on those plans. Requests from an account without access return
