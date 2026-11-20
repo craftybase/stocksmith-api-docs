@@ -3,7 +3,7 @@
   "info": {
     "title": "Stocksmith API",
     "version": "v1",
-    "description": "REST API for reading materials, products, components, recipes, manufactures, expenses and inventory adjustments."
+    "description": "REST API for reading materials, products, components, recipes, manufactures, expenses, orders and inventory adjustments."
   },
   "servers": [
     {
@@ -1859,6 +1859,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "costed",
+            "in": "query",
+            "required": false,
+            "description": "true returns manufactures with a materials cost, false those whose materials cost is zero. Production status is not checked, so add status=completed to match the app's uncosted warning, which shows only on completed manufactures. Any other value returns 400.",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -1883,6 +1892,7 @@
                           "production_status",
                           "quantity",
                           "actual_quantity",
+                          "costed",
                           "line_items",
                           "created_at",
                           "updated_at"
@@ -2002,6 +2012,10 @@
                               }
                             }
                           },
+                          "costed": {
+                            "type": "boolean",
+                            "description": "True when the manufacture carries a materials cost, false when its materials cost is zero. Does not depend on production status: the app shows its uncosted warning only on completed manufactures."
+                          },
                           "total_materials_cost": {
                             "$ref": "#/components/schemas/Money",
                             "nullable": true,
@@ -2085,6 +2099,7 @@
                         "production_status",
                         "quantity",
                         "actual_quantity",
+                        "costed",
                         "line_items",
                         "created_at",
                         "updated_at"
@@ -2203,6 +2218,10 @@
                               }
                             }
                           }
+                        },
+                        "costed": {
+                          "type": "boolean",
+                          "description": "True when the manufacture carries a materials cost, false when its materials cost is zero. Does not depend on production status: the app shows its uncosted warning only on completed manufactures."
                         },
                         "total_materials_cost": {
                           "$ref": "#/components/schemas/Money",
@@ -2571,6 +2590,350 @@
           },
           "404": {
             "description": "material not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orders": {
+      "get": {
+        "summary": "List orders",
+        "tags": [
+          "Orders"
+        ],
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ],
+        "description": "Newest order date first. Buyer details (contact, address, messages, payment and tracking) are not returned.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (default: 1)",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Results per page (default: 25, max: 100)",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "costed",
+            "in": "query",
+            "required": false,
+            "description": "false returns orders with an active line whose make cost is zero, shipped or not, and true returns the rest. Any other value returns 400.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "paginated list of orders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "orders",
+                    "meta"
+                  ],
+                  "properties": {
+                    "orders": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "status",
+                          "costed",
+                          "line_items"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "ordered_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true,
+                            "description": "Order date"
+                          },
+                          "shipped_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "unshipped",
+                              "shipped",
+                              "cancelled"
+                            ]
+                          },
+                          "sales_channel": {
+                            "type": "object",
+                            "nullable": true,
+                            "description": "The shop the order came from, or null for a manual order.",
+                            "properties": {
+                              "id": {
+                                "type": "integer"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "provider": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "e.g. etsy, shopify, amazon"
+                              }
+                            }
+                          },
+                          "costed": {
+                            "type": "boolean",
+                            "description": "True when every active line has a make cost, shipped or not. An order with no active lines is costed. The app shows its uncosted warning only on shipped orders that are not cancelled."
+                          },
+                          "line_items": {
+                            "type": "array",
+                            "description": "Active lines only: cancelled lines are left out.",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "id",
+                                "product_id",
+                                "quantity",
+                                "costed"
+                              ],
+                              "properties": {
+                                "id": {
+                                  "type": "integer"
+                                },
+                                "product_id": {
+                                  "type": "integer",
+                                  "description": "ID of the product sold"
+                                },
+                                "variation_id": {
+                                  "type": "integer",
+                                  "nullable": true
+                                },
+                                "quantity": {
+                                  "type": "string",
+                                  "description": "Decimal string"
+                                },
+                                "costed": {
+                                  "type": "boolean",
+                                  "description": "False when the line's make cost is zero."
+                                },
+                                "manufacture_id": {
+                                  "type": "integer",
+                                  "nullable": true,
+                                  "description": "ID of the manufacture linked to this line, or null when there is none."
+                                },
+                                "material_cost": {
+                                  "$ref": "#/components/schemas/Money",
+                                  "description": "Make cost of the line, in the account's currency. Omitted for view-only users."
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginationMeta"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "costed is not true or false",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orders/{id}": {
+      "get": {
+        "summary": "Retrieve an order",
+        "tags": [
+          "Orders"
+        ],
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Order ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "order details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "order"
+                  ],
+                  "properties": {
+                    "order": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "status",
+                        "costed",
+                        "line_items"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "ordered_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true,
+                          "description": "Order date"
+                        },
+                        "shipped_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "unshipped",
+                            "shipped",
+                            "cancelled"
+                          ]
+                        },
+                        "sales_channel": {
+                          "type": "object",
+                          "nullable": true,
+                          "description": "The shop the order came from, or null for a manual order.",
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "provider": {
+                              "type": "string",
+                              "nullable": true,
+                              "description": "e.g. etsy, shopify, amazon"
+                            }
+                          }
+                        },
+                        "costed": {
+                          "type": "boolean",
+                          "description": "True when every active line has a make cost, shipped or not. An order with no active lines is costed. The app shows its uncosted warning only on shipped orders that are not cancelled."
+                        },
+                        "line_items": {
+                          "type": "array",
+                          "description": "Active lines only: cancelled lines are left out.",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "product_id",
+                              "quantity",
+                              "costed"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "integer"
+                              },
+                              "product_id": {
+                                "type": "integer",
+                                "description": "ID of the product sold"
+                              },
+                              "variation_id": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "quantity": {
+                                "type": "string",
+                                "description": "Decimal string"
+                              },
+                              "costed": {
+                                "type": "boolean",
+                                "description": "False when the line's make cost is zero."
+                              },
+                              "manufacture_id": {
+                                "type": "integer",
+                                "nullable": true,
+                                "description": "ID of the manufacture linked to this line, or null when there is none."
+                              },
+                              "material_cost": {
+                                "$ref": "#/components/schemas/Money",
+                                "description": "Make cost of the line, in the account's currency. Omitted for view-only users."
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "order not found",
             "content": {
               "application/json": {
                 "schema": {
